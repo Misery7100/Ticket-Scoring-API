@@ -19,7 +19,7 @@ class Brand(models.Model):
 
 # ------------------------- #
 
-class BaseTicket(models.Model):
+class Ticket(models.Model):
 
     ticket_id = models.CharField(max_length=100)
     server_id = models.CharField(max_length=100)
@@ -31,7 +31,7 @@ class BaseTicket(models.Model):
 
 # ------------------------- #
 
-class VerifyProfile(BaseTicket):
+class VerifyProfile(Ticket):
 
     scoring_type = models.CharField(max_length=100)
     account_type = models.CharField(max_length=100)
@@ -39,16 +39,17 @@ class VerifyProfile(BaseTicket):
     legal_entity_type = models.CharField(max_length=50, blank=True)
     profile_bank_accounts = models.IntegerField()
     enabled_currencies = psqlfields.ArrayField(models.CharField(max_length=10), blank=True)
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True)
 
 # ------------------------- #
 #? do we need it at all?
-class UnverifiedPaySource(BaseTicket):
+class UnverifiedPaySource(Ticket):
 
     amount = models.FloatField()
 
 # ------------------------- #
 
-class TurnoverLimitAlert(BaseTicket):
+class TurnoverLimitAlert(Ticket):
 
     amount = models.FloatField()
 

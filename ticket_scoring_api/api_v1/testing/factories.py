@@ -5,7 +5,7 @@ from ticket_scoring_api.api_v1.models import *
 
 # ------------------------- #
 
-class BaseTicketFactory(DjangoModelFactory):
+class TicketFactory(DjangoModelFactory):
 
     ticket_id = Faker('uuid4')
     server_id = Faker('uuid4')
@@ -13,4 +13,11 @@ class BaseTicketFactory(DjangoModelFactory):
     ticket_issue_date = Faker('date_time')
 
     class Meta:
-        model = BaseTicket
+        model = Ticket
+
+# ------------------------- #
+
+class BrandFactory(DjangoModelFactory):
+
+    class Meta:
+        model = Brand
