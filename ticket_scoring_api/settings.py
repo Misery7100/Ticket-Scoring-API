@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import yaml
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'ticket_scoring_api.api_v1.apps.ApiV1Config'
 ]
 
 MIDDLEWARE = [
@@ -82,6 +84,17 @@ WSGI_APPLICATION = 'ticket_scoring_api.wsgi.application'
 DATABASES = {
     'default': dbs['ticket-scoring-dev']
 }
+
+
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'tsapi',
+        'USER': 'testing',
+        'PASSWORD': 'test',
+        'HOST': 'localhost',
+        'PORT': '',
+    }
 
 
 # Password validation
