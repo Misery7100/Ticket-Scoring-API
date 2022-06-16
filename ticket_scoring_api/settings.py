@@ -86,17 +86,17 @@ DATABASES = {
 }
 
 
-if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'OPTIONS': {
-            'options': '-c search_path=public,history'
-        },
-        'NAME': 'tsapi',
-        'USER': 'testing',
-        'PASSWORD': 'test',
-        'HOST': 'localhost'
-    }
+#if 'test' in sys.argv:
+DATABASES['default'] = {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'OPTIONS': {
+        'options': '-c search_path=django,history,public'
+    },
+    'NAME': 'tsapi',
+    'USER': 'postgres',
+    'PASSWORD': 's@p191Jz778_~',
+    'HOST': 'localhost'
+}
 
 
 # Password validation
