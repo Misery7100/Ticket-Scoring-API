@@ -20,7 +20,3 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('ticket_scoring_api.api_v1.urls'))
 ]
-
-from django.urls import get_resolver
-
-print(urlpatterns)

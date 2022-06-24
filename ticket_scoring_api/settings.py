@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'ticket_scoring_api.api_v1.apps.ApiV1Config'
+    'ticket_scoring_api.api_v1.apps.ApiV1Config',
+    'django_celery_results',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -90,7 +92,7 @@ DATABASES = {
 DATABASES['default'] = {
     'ENGINE': 'django.db.backends.postgresql_psycopg2',
     'OPTIONS': {
-        'options': '-c search_path=django,history,public'
+        'options': '-c search_path=django,history,static,public'
     },
     'NAME': 'tsapi',
     'USER': 'postgres',
@@ -139,3 +141,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery settings
+
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL = 'redis://localhost:6379'
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_ENABLE_UTC = True

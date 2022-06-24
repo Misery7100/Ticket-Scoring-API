@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres import fields as psqlfields
+from .static_models import *
 
 # ------------------------- #
 
@@ -9,12 +10,12 @@ class Ticket(models.Model):
     """
 
     ticket_id = models.CharField(max_length=100, primary_key=True)
-    ticket_type = models.CharField(max_length=100)
+    ticket_type_id = models.SmallIntegerField(default=1)
     server_id = models.CharField(max_length=100)
     client_id = models.CharField(max_length=100)
-    issue_date = models.DateTimeField(max_length=50)
-    solving_date = models.DateTimeField(max_length=50, blank=True, null=True)
-    is_solved = models.BooleanField(default=False, blank=True, null=True)
+    issue_date = models.DateTimeField()
+    solving_date = models.DateTimeField(blank=True, null=True)
+    ticket_status_id = models.SmallIntegerField(default=1)
     hours_in_pause = models.FloatField(default=0.0, blank=True, null=True)
     last_pause_timestamp = models.DateTimeField(blank=True, null=True)
     
@@ -57,14 +58,14 @@ class Brand(models.Model):
     # ......................... #
 
     class Meta:
-        db_table = 'history"."api_v1_verify_profile_brand'
+        db_table = 'history"."api_v1_brand'
 
 # ------------------------- #
 
 class UnverifiedPaymentSource(models.Model):
 
     ticket_assigned = models.OneToOneField(Ticket, primary_key=True, on_delete=models.CASCADE)
-    amount = models.FloatField()
+    payment_amount = models.FloatField()
     currencies = psqlfields.ArrayField(models.CharField(max_length=10), blank=True, null=True)
 
     # ......................... #
@@ -81,6 +82,22 @@ class TurnoverLimitAlert(models.Model):
     legal_country_code = models.CharField(max_length=20)
     legal_entity_type = models.CharField(max_length=50, blank=True, null=True)
 
+    limit_type = models.CharField(max_length=50)
+    limit_product = models.CharField(max_length=50)
+    limit_entity = models.CharField(max_length=50)
+    limit_percentage = models.FloatField()
+    limit_amount = models.FloatField()
+
+    turnover_last_thirty_days = models.FloatField() # in EUR
+    turnover_prev_thirty_days = models.FloatField() # in EUR
+
+    limit_due_date = models.DateTimeField()
+
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+    channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+    terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+    currencies = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+
     # ......................... #
 
     class Meta:
@@ -91,7 +108,7 @@ class TurnoverLimitAlert(models.Model):
 class OutgoingAccountPayment(models.Model):
 
     ticket_assigned = models.OneToOneField(Ticket, primary_key=True, on_delete=models.CASCADE)
-    amount = models.FloatField()
+    payment_amount = models.FloatField()
     clearing_time = models.DateTimeField(blank=True, null=True)
 
     # ......................... #
@@ -104,7 +121,7 @@ class OutgoingAccountPayment(models.Model):
 class OutgoingAccountPaymentTransfer(models.Model):
 
     ticket_assigned = models.OneToOneField(Ticket, primary_key=True, on_delete=models.CASCADE)
-    amount = models.FloatField()
+    payment_amount = models.FloatField()
     clearing_time = models.DateTimeField(blank=True)
 
     # ......................... #
@@ -127,16 +144,17 @@ class ScoringGlobal(models.Model):
 
 # ------------------------- #
 
-# TODO: models for ML
+class AverageSolvingTime(models.Model):
+
+    ticket_type_id = models.SmallIntegerField()
+    avg_solving_time_hours = models.FloatField()
+
+    # ......................... #
+
+    class Meta:
+        db_table = 'history"."api_v1_average_solving_time'
 
 # ------------------------- #
 
-# MODELS = {
-#     'verify_profile' : VerifyProfile,
-#     'turnover_limit_alert' : TurnoverLimitAlert,
-#     'unverified_payment_source' : UnverifiedPaymentSource,
-#     'outgoing_account_payment' : OutgoingAccountPayment,
-#     'outgoing_account_payment_transfer' : OutgoingAccountPaymentTransfer
-# }
-
-# # ------------------------- #
+# TODO: models for ML
+# TODO: models for storage optimization (?)

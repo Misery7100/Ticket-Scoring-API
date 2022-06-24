@@ -8,12 +8,12 @@ class TicketSerializer(ModelSerializer):
         model = Ticket
         fields = (
             'ticket_id',
-            'ticket_type',
+            'ticket_type_id',
             'server_id',
             'client_id',
             'issue_date',
             'solving_date',
-            'is_solved',
+            'ticket_status_id',
             'hours_in_pause',
             'last_pause_timestamp'
         )
@@ -30,7 +30,7 @@ class VerifyProfileSerializer(ModelSerializer):
 class TurnoverLimitAlertSerializer(ModelSerializer):
     class Meta:
         model = TurnoverLimitAlert
-        fields = '__all__'
+        fields = ('__all__')
 
 # ------------------------- #
 
