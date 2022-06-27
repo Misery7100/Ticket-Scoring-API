@@ -1,9 +1,8 @@
 from django.db import models
 from django.contrib.postgres import fields as psqlfields
 from django.shortcuts import get_object_or_404
+from ticket_scoring_api.utils import dotdict
 
-# ------------------------- #
-# Static models
 # ------------------------- #
 
 class TicketStatus(models.Model):
@@ -32,10 +31,10 @@ class TicketType(models.Model):
 # Utils
 # ------------------------- #
 
-model_kv = {
-    'ticket_status' : TicketStatus,
-    'ticket_type' : TicketType
-}
+model_kv = dict(
+        ticket_status=TicketStatus,
+        ticket_type=TicketType
+    )
 
 def get_id_by_value(value, name: str) -> int:
 

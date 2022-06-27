@@ -1,5 +1,8 @@
 from rest_framework.serializers import ModelSerializer
-from .models import *
+
+from ticket_scoring_api.utils import dotdict
+
+from .models.dynamic import *
 
 # ------------------------- #
 
@@ -52,15 +55,5 @@ class OutgoingAccountPaymentTransferSerializer(ModelSerializer):
     class Meta:
         model = OutgoingAccountPaymentTransfer
         fields = '__all__'
-
-# ------------------------- #
-
-SERIALIZERS = {
-    'verify_profile' : VerifyProfileSerializer,
-    'turnover_limit_alert' : TurnoverLimitAlertSerializer,
-    'unverified_payment_source' : UnverifiedPaymentSourceSerializer,
-    'outgoing_account_payment' : OutgoingAccountPaymentSerializer,
-    'outgoing_account_payment_transfer' : OutgoingAccountPaymentTransferSerializer
-}
 
 # ------------------------- #

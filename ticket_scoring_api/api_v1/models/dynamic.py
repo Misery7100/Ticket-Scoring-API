@@ -1,13 +1,10 @@
 from django.db import models
 from django.contrib.postgres import fields as psqlfields
-from .static_models import *
+from .static import *
 
 # ------------------------- #
 
 class Ticket(models.Model):
-
-    """General ticket storage
-    """
 
     ticket_id = models.CharField(max_length=100, primary_key=True)
     ticket_type_id = models.SmallIntegerField(default=1)
