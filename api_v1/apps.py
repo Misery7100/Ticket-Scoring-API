@@ -4,7 +4,6 @@ import yaml
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 from pathlib import Path
-from ticket_scoring_api.api_v1.models import dynamic
 
 from ticket_scoring_api.local import *
 
@@ -12,7 +11,8 @@ from ticket_scoring_api.local import *
 
 def insert_initial_data(sender, **kwargs):
 
-    from ticket_scoring_api.api_v1.models import static
+    from api_v1.models import static
+    from api_v1.models import dynamic
 
     def create(model, **kwargs):
         model.objects.get_or_create(**kwargs)
@@ -33,7 +33,7 @@ def insert_initial_data(sender, **kwargs):
 class ApiV1Config(AppConfig):
 
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'ticket_scoring_api.api_v1'
+    name = 'api_v1'
 
     # ......................... #
 

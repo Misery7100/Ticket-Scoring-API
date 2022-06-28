@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Callable, Any
 
-from ticket_scoring_api.api_v1.models.static import *
+from api_v1.models.static import *
 from ticket_scoring_api.utils import dotdict
 
 # ------------------------- #
@@ -78,6 +78,7 @@ def _calc_importance_turnover_limit_alert(**kwargs) -> float:
     turnover30last = kwargs.turnover_last_thirty_days
     turnover30past = kwargs.turnover_past_thirty_days
 
+    # TODO: here should be a bit different strategy (check google doc)
     A1 = (100 - percentage) * amount / turnover30last
     A2 = (100 - percentage) * amount / turnover30past
 
@@ -91,10 +92,8 @@ def _calc_importance_unverified_payment_source(**kwargs) -> float:
 # ------------------------- #
 
 def _calc_importance_outgoing_account_payment(**kwargs) -> float:
-
-    kwargs = dotdict(kwargs) #! unnecessary
     
-    clearing_time = kwargs.clearing_time
+    clearing_time = kwargs.get('clearing_time', False)
 
     if clearing_time:
         now = datetime.now(timezone.utc)

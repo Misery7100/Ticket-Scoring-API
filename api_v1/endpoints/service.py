@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 
-from ticket_scoring_api.api_v1.models.dynamic import *
-from ticket_scoring_api.api_v1.serializers import *
+from api_v1.models.dynamic import *
+from api_v1.serializers import *
 
 # ------------------------- #
 

@@ -1,8 +1,8 @@
 from rest_framework.serializers import ModelSerializer
 from typing import Callable, Any, Dict
 
-from ticket_scoring_api.api_v1.serializers import *
-from ticket_scoring_api.api_v1.models.dynamic import *
+from api_v1.serializers import *
+from api_v1.models.dynamic import *
 from ticket_scoring_api.local import *
 
 from .utils import get_total_amount_eur

@@ -1,7 +1,7 @@
 from factory import Faker
 from factory.django import DjangoModelFactory
 
-from ticket_scoring_api.api_v1.models.dynamic import *
+from api_v1.models.dynamic import *
 
 # ------------------------- #
 

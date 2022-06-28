@@ -7,10 +7,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from ticket_scoring_api.api_v1.scoring.preprocess_ticket_data import preprocess_ticket_data
-from ticket_scoring_api.api_v1.models.dynamic import *
-from ticket_scoring_api.api_v1.models.static import *
-from ticket_scoring_api.api_v1.serializers import *
+from api_v1.scoring.preprocess_ticket_data import preprocess_ticket_data
+from api_v1.models.dynamic import *
+from api_v1.models.static import *
+from api_v1.serializers import *
 
 # ------------------------- #
 

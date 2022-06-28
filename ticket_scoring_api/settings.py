@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'ticket_scoring_api.api_v1.apps.ApiV1Config',
+    'api_v1.apps.ApiV1Config',
     'django_celery_results',
     'django_celery_beat'
 ]
