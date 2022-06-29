@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 
-from ticket_scoring_api.utils import dotdict
+from backend.utils import dotdict
 
 from .models.dynamic import *
 
@@ -33,7 +33,7 @@ class VerifyProfileSerializer(ModelSerializer):
 class TurnoverLimitAlertSerializer(ModelSerializer):
     class Meta:
         model = TurnoverLimitAlert
-        fields = ('__all__')
+        fields = '__all__'
 
 # ------------------------- #
 
@@ -54,6 +54,13 @@ class OutgoingAccountPaymentSerializer(ModelSerializer):
 class OutgoingAccountPaymentTransferSerializer(ModelSerializer):
     class Meta:
         model = OutgoingAccountPaymentTransfer
+        fields = '__all__'
+
+# ------------------------- #
+
+class BrandSerializer(ModelSerializer):
+    class Meta:
+        model = Brand
         fields = '__all__'
 
 # ------------------------- #

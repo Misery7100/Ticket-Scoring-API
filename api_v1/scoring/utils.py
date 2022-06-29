@@ -1,8 +1,8 @@
 import requests
 from typing import Callable, Any, Dict
 
-from ticket_scoring_api.local import *
-from ticket_scoring_api.utils import dotdict
+from backend.local import *
+from backend.utils import dotdict
 
 # ------------------------- #
 

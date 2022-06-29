@@ -3,7 +3,7 @@ import yaml
 
 from pathlib import Path
 
-from ticket_scoring_api.utils import dotdict
+from backend.utils import dotdict
 
 # ------------------------- #
 

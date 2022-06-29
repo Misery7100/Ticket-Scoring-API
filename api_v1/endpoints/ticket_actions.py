@@ -1,7 +1,9 @@
+import json
+import logging
+
 from datetime import datetime, timezone
 from django.shortcuts import get_object_or_404
-from django_celery_beat.models import PeriodicTask, PeriodicTasks, IntervalSchedule
-from pathlib import Path
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,6 +13,10 @@ from api_v1.scoring.preprocess_ticket_data import preprocess_ticket_data
 from api_v1.models.dynamic import *
 from api_v1.models.static import *
 from api_v1.serializers import *
+
+# ------------------------- #
+
+logger = logging.getLogger(__name__)
 
 # ------------------------- #
 
@@ -41,10 +47,7 @@ def add_ticket(request: Request) -> Response:
             data={'ticket_type' : ['unknown ticket_type']}) # TODO: better error handling
 
     # take type id from static table
-    data = {
-        **data,
-        'ticket_type_id' : get_id_by_value(ticket_type, name='ticket_type')
-    }
+    data['ticket_type_id'] = get_id_by_value(ticket_type, name='ticket_type')
 
     # store ticket globally if data is valid
     ticket = TicketSerializer(data=data)
@@ -52,10 +55,7 @@ def add_ticket(request: Request) -> Response:
     ticket.save()
     
     # add new data for storing type-specific stuff
-    data = {
-        **data, 
-        'ticket_assigned' : ticket_id
-    }
+    data['ticket_assigned'] = ticket_id
 
     # build data due non-flat request schema 
     # for some ticket types
@@ -70,15 +70,15 @@ def add_ticket(request: Request) -> Response:
         # 1. get or create a schedule
         schedule, _ = IntervalSchedule.objects.get_or_create(
             every=5,
-            period=IntervalSchedule.MINUTES,
+            period=IntervalSchedule.SECONDS,
         )
 
         # 2. create a periodic task with assigned function
         PeriodicTask.objects.create(
             interval=schedule,
-            name=f'api_v1.score_update_{ticket_id}',
-            task='ticket_scoring_api.api_v1.tasks.test',
-            args=f'["{ticket_id} is on updating"]'
+            name=f'api_v1.score_update_{ticket_id}', # TODO: replace with api_v1.tasks.score_update[ticket_id]
+            task='api_v1.tasks.report_status', # TODO: implement api_v1.tasks.score_update
+            kwargs=json.dumps({'ticket_id' : ticket_id})
         )
 
         return Response(
@@ -261,7 +261,12 @@ def delete_ticket(request: Request, ticket_id: str) -> Response:
             200:
     """
 
-    get_object_or_404(Ticket, ticket_id=ticket_id).delete()
+    ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
+
+    if ticket.ticket_status_id != get_id_by_value('closed', name='ticket_status'):
+        PeriodicTask.objects.get(name=f'api_v1.score_update_{ticket.ticket_id}').delete()
+
+    ticket.delete()
 
     return Response(status=status.HTTP_200_OK)
 
@@ -288,3 +293,5 @@ def update_ticket_score(request: Request, ticket_id: str) -> Response:
     # ... scoring
 
     return Response(status=status.HTTP_200_OK)
+
+# ------------------------- #

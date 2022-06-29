@@ -5,28 +5,64 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 from pathlib import Path
 
-from ticket_scoring_api.local import *
+from backend.local import *
 
 # ------------------------- #
 
-def insert_initial_data(sender, **kwargs):
+def insert_initial_data(sender: AppConfig, **kwargs):
+    """
+    Populates initial data for common small tables using local yml files.
+
+    Args:
+        sender (AppConfig): app-related config instance
+    """
 
     from api_v1.models import static
     from api_v1.models import dynamic
 
-    def create(model, **kwargs):
+    def populate(model, **kwargs):
         model.objects.get_or_create(**kwargs)
 
     # ......................... #
 
     for key, value in staticdata.ticket_status.items():
-        create(static.TicketStatus, ticket_status_id=value, ticket_status=key)
+        populate(static.TicketStatus, ticket_status_id=value, ticket_status=key)
     
     for key, value in staticdata.ticket_type.items():
-        create(static.TicketType, ticket_type_id=value, ticket_type=key)
+        populate(static.TicketType, ticket_type_id=value, ticket_type=key)
     
     for key, value in staticdata.avg_solving_time.items():
-        create(dynamic.AverageSolvingTime, ticket_type_id=key, avg_solving_time_hours=value)
+        populate(dynamic.AverageSolvingTime, ticket_type_id=key, avg_solving_time_hours=value)
+    
+    for key, value in staticdata.max_relative_score.items():
+        populate(dynamic.MaxRelativeScore, ticket_type_id=key, max_relative_score=value)
+
+# ------------------------- #
+
+def setup_routine_tasks(sender: AppConfig, **kwargs):
+    """
+    Configure routine periodical tasks with celery and django_celery_beat.
+
+    Args:
+        sender (AppConfig): app-related config instance
+    """
+
+    from django_celery_beat.models import PeriodicTask, IntervalSchedule
+
+    # ......................... #
+
+    # average solving time update
+    
+    schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1,
+            period=IntervalSchedule.HOURS,
+        )
+
+    PeriodicTask.objects.get_or_create(
+        interval=schedule,
+        name='api_v1.tasks.update_average_solving_time',
+        task='api_v1.tasks.update_average_solving_time'
+    )
 
 # ------------------------- #
 
@@ -39,3 +75,4 @@ class ApiV1Config(AppConfig):
 
     def ready(self) -> None:
         post_migrate.connect(insert_initial_data, sender=self)
+        #post_migrate.connect(setup_routine_tasks, sender=self)

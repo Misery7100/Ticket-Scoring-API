@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.postgres import fields as psqlfields
 from django.shortcuts import get_object_or_404
-from ticket_scoring_api.utils import dotdict
+from backend.utils import dotdict
 
 # ------------------------- #
 
@@ -42,6 +42,14 @@ def get_id_by_value(value, name: str) -> int:
     obj = get_object_or_404(model_kv[name], **kwg)
 
     return int(getattr(obj, f'{name}_id'))
+
+# ------------------------- #
+
+def get_value_by_id(id, name: str) -> str:
+
+    obj = get_object_or_404(model_kv[name], id=id)
+
+    return str(getattr(obj, name))
 
 # ------------------------- #
 

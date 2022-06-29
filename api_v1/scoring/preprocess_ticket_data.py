@@ -3,7 +3,7 @@ from typing import Callable, Any, Dict
 
 from api_v1.serializers import *
 from api_v1.models.dynamic import *
-from ticket_scoring_api.local import *
+from backend.local import *
 
 from .utils import get_total_amount_eur
 
@@ -27,7 +27,7 @@ def preprocess_ticket_data(data: Dict[str, Any], ticket_type: str) -> ModelSeria
 
 # ------------------------- #
 
-def _get_data_preprocessor(ticket_type: str) -> Callable[[Dict[str, Any]], ModelSerializer]:
+def _get_data_preprocessor(ticket_type: str) -> Callable[..., ModelSerializer]:
     """
     Creation component for the data preprocessing factory.
 
@@ -38,7 +38,7 @@ def _get_data_preprocessor(ticket_type: str) -> Callable[[Dict[str, Any]], Model
         ValueError: unknown ticket type
 
     Returns:
-        Callable[[Dict[str, Any]], ModelSerializer]: preprocessing function for specified ticket type
+        Callable[[Dict[str, Any]], ModelSerializer]: preprocessing function for the specified ticket type
     """
 
     if ticket_type == 'verify_profile':
@@ -75,7 +75,15 @@ def _preprocess_verify_profile(data: Dict[str, Any]) -> VerifyProfileSerializer:
 
     # involved brands
     if data.get('brands', False):
-        pass
+
+        for brand in data['brands']:
+            brand['ticket_assigned'] = data['ticket_assigned']
+            brand_data = BrandSerializer(data=brand)
+            brand_data.is_valid(raise_exception=True) # raises 400 if invalid
+            brand_data.save()
+        
+        brand_ids = [brand['brand_local_id'] for brand in data['brands']]
+        data['brands'] = brand_ids
     
     return VerifyProfileSerializer(data=data)
 
@@ -93,7 +101,7 @@ def _preprocess_turnover_limit_alert(data: Dict[str, Any]) -> TurnoverLimitAlert
         TurnoverLimitAlertSerializer: preprocessed and serialized data
     """
     
-    # track involved entities
+    # track involved entities (we trackin it as arrays dude)
     if data.get('brands', False):
         pass
 

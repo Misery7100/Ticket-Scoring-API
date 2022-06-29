@@ -32,7 +32,7 @@ class VerifyProfile(models.Model):
     legal_entity_type = models.CharField(max_length=50, blank=True, null=True)
     profile_bank_accounts = models.IntegerField(default=0)
     enabled_currencies = psqlfields.ArrayField(models.CharField(max_length=10), blank=True, null=True)
-    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
 
     # ......................... #
 
@@ -55,7 +55,7 @@ class Brand(models.Model):
     # ......................... #
 
     class Meta:
-        db_table = 'history"."api_v1_brand'
+        db_table = 'history"."api_v1_brand_verify_profile'
 
 # ------------------------- #
 
@@ -90,10 +90,10 @@ class TurnoverLimitAlert(models.Model):
 
     limit_due_date = models.DateTimeField()
 
-    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
-    channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
-    terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
-    currencies = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True)
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
+    channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
+    terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
+    currencies = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
 
     # ......................... #
 
@@ -150,6 +150,18 @@ class AverageSolvingTime(models.Model):
 
     class Meta:
         db_table = 'history"."api_v1_average_solving_time'
+
+# ------------------------- #
+
+class MaxRelativeScore(models.Model):
+
+    ticket_type_id = models.SmallIntegerField()
+    max_relative_score = models.FloatField()
+
+    # ......................... #
+
+    class Meta:
+        db_table = 'history"."api_v1_maximum_relative_score'
 
 # ------------------------- #
 
