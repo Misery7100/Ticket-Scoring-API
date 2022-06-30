@@ -1,5 +1,6 @@
 from django.urls import include, path
-from .endpoints import ticket_actions
+
+from api_v1.endpoints import ticket_actions
 
 # ------------------------- #
 

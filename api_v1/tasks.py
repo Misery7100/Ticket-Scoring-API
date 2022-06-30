@@ -1,11 +1,10 @@
 import logging
 
-from django.shortcuts import get_object_or_404
-from django_celery_beat.models import PeriodicTask, PeriodicTasks, IntervalSchedule
+from datetime import datetime, timezone
 
-from api_v1.models.dynamic import Ticket
-from api_v1.models.static import TicketStatus, get_value_by_id
-from api_v1.scoring.general import update_average_solving_time_all_ticket_types
+from api_v1.models.static import get_value_by_id
+from api_v1.scoring.general import update_average_solving_time_all_ticket_types, get_general_score
+from api_v1.serializers import ScoringGlobalSerializer
 from backend.celery import app as celery_app
 
 # ------------------------- #
@@ -15,19 +14,23 @@ logger = logging.getLogger(__name__)
 # ------------------------- #
 
 @celery_app.task
-def test(arg: str = 'test'):
-    logger.warning(f'! {arg=} !')
+def update_ticket_score(ticket_type_id: int, ticket_id: str, **kwargs) -> float:
+    score = get_general_score(ticket_id=ticket_id, ticket_type_id=ticket_type_id, **kwargs)
+    now = datetime.now(timezone.utc)
+    
+    data = dict(
+        ticket_assigned=ticket_id,
+        score=score,
+        timestamp=now
+    )
 
-# ------------------------- #
+    record = ScoringGlobalSerializer(data=data)
+    record.is_valid(raise_exception=True)
+    record.save()
 
-@celery_app.task
-def report_status(ticket_id: str):
-    ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
-    status = ticket.ticket_status_id
+    # TODO: push the result to external endpoint async
 
-    status_str = get_value_by_id(status, name='ticket_status')
-
-    return f'"{ticket_id}" is {status_str}'
+    return score
 
 # ------------------------- #
 

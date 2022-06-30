@@ -1,11 +1,10 @@
 from rest_framework.serializers import ModelSerializer
 from typing import Callable, Any, Dict
 
-from api_v1.serializers import *
 from api_v1.models.dynamic import *
+from api_v1.serializers import *
 from backend.local import *
-
-from .utils import get_total_amount_eur
+from api_v1.scoring.utils import get_total_amount_eur
 
 # ------------------------- #
 

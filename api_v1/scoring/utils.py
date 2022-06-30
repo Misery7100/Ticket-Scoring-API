@@ -1,5 +1,6 @@
 import requests
-from typing import Callable, Any, Dict
+
+from typing import Dict, List
 
 from backend.local import *
 from backend.utils import dotdict
@@ -35,5 +36,62 @@ def convert_currency_to_eur(
     converted = amount * exchange_rate
 
     return converted
+
+# ------------------------- #
+
+def get_mom_growth_perc(month2: float, month1: float) -> float:
+    """
+    Calculate Month-over-Month growth rate.
+
+    Args:
+        month2 (float): monthly metric
+        month1 (float): previous monthly metric
+
+    Returns:
+        float: MoM growth rate
+    """
+
+    return (month2 - month1) / month1
+
+# ------------------------- #
+
+def get_mom_growth_average(months: List[float]) -> float:
+    """
+    Calculate average Month-over-Month growth rate.
+
+    Args:
+        months (List[float]): monthly metrics sorted chronologically.
+
+    Returns:
+        float: average MoM growth rate
+    """
+
+    assert(len(months) > 0)
+    
+    momgps = [
+        get_mom_growth_perc(months[i + 1], months[i])
+        for i in range(len(months) - 1)
+    ]
+
+    return sum(momgps) / len(momgps)
+
+# ------------------------- #
+
+def get_compound_growth_rate(last_period: float, first_period: float, period_difference: int) -> float:
+    """
+    Calculate compound growth rate.
+
+    Args:
+        last_month (float): last period metric
+        first_month (float): first period metric
+        period_difference (int): time difference between last and first period in periods
+
+    Returns:
+        float: CMGR
+    """
+
+    assert (period_difference > 0)
+
+    return (last_period / first_period) ** (1 / period_difference) - 1
 
 # ------------------------- #

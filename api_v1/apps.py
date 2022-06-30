@@ -11,7 +11,7 @@ from backend.local import *
 
 def insert_initial_data(sender: AppConfig, **kwargs):
     """
-    Populates initial data for common small tables using local yml files.
+    Populate initial data for common small tables using local yml files.
 
     Args:
         sender (AppConfig): app-related config instance
@@ -39,12 +39,9 @@ def insert_initial_data(sender: AppConfig, **kwargs):
 
 # ------------------------- #
 
-def setup_routine_tasks(sender: AppConfig, **kwargs):
+def setup_routine_tasks():
     """
     Configure routine periodical tasks with celery and django_celery_beat.
-
-    Args:
-        sender (AppConfig): app-related config instance
     """
 
     from django_celery_beat.models import PeriodicTask, IntervalSchedule
@@ -52,10 +49,10 @@ def setup_routine_tasks(sender: AppConfig, **kwargs):
     # ......................... #
 
     # average solving time update
-    
+
     schedule, _ = IntervalSchedule.objects.get_or_create(
             every=1,
-            period=IntervalSchedule.HOURS,
+            period=IntervalSchedule.HOURS, # TODO: change period from service endpoint <-
         )
 
     PeriodicTask.objects.get_or_create(
@@ -75,4 +72,9 @@ class ApiV1Config(AppConfig):
 
     def ready(self) -> None:
         post_migrate.connect(insert_initial_data, sender=self)
-        #post_migrate.connect(setup_routine_tasks, sender=self)
+
+        # if reset
+        try:
+            setup_routine_tasks()
+        except:
+            pass

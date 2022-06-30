@@ -1,6 +1,5 @@
-from django.db import models
 from django.contrib.postgres import fields as psqlfields
-from .static import *
+from django.db import models
 
 # ------------------------- #
 
@@ -32,7 +31,7 @@ class VerifyProfile(models.Model):
     legal_entity_type = models.CharField(max_length=50, blank=True, null=True)
     profile_bank_accounts = models.IntegerField(default=0)
     enabled_currencies = psqlfields.ArrayField(models.CharField(max_length=10), blank=True, null=True)
-    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
 
     # ......................... #
 
@@ -90,10 +89,10 @@ class TurnoverLimitAlert(models.Model):
 
     limit_due_date = models.DateTimeField()
 
-    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
-    channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
-    terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
-    currencies = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=[])
+    brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
+    channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
+    terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
+    currencies = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
 
     # ......................... #
 
@@ -130,7 +129,7 @@ class OutgoingAccountPaymentTransfer(models.Model):
 
 class ScoringGlobal(models.Model):
 
-    ticket_assigned = models.OneToOneField(Ticket, primary_key=False, on_delete=models.CASCADE)
+    ticket_assigned = models.ForeignKey(Ticket, primary_key=False, on_delete=models.CASCADE)
     score = models.FloatField()
     timestamp = models.DateTimeField()
 

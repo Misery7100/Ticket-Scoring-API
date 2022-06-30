@@ -1,5 +1,4 @@
 class dotdict(dict):
-
     """Dot notation access to dictionary elements"""
     
     def __getattr__(*args):

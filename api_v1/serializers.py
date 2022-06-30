@@ -1,8 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 
-from backend.utils import dotdict
-
-from .models.dynamic import *
+from api_v1.models.dynamic import *
 
 # ------------------------- #
 
@@ -64,3 +62,8 @@ class BrandSerializer(ModelSerializer):
         fields = '__all__'
 
 # ------------------------- #
+
+class ScoringGlobalSerializer(ModelSerializer):
+    class Meta:
+        model = ScoringGlobal
+        fields = '__all__'

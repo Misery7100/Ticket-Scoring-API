@@ -4,15 +4,16 @@ import logging
 from datetime import datetime, timezone
 from django.shortcuts import get_object_or_404
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
-from rest_framework.decorators import api_view
 from rest_framework import status
-from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework.request import Request
+from rest_framework.response import Response
 
-from api_v1.scoring.preprocess_ticket_data import preprocess_ticket_data
 from api_v1.models.dynamic import *
 from api_v1.models.static import *
 from api_v1.serializers import *
+from api_v1.scoring.preprocess_ticket_data import preprocess_ticket_data
+from api_v1.tasks import update_ticket_score
 
 # ------------------------- #
 
@@ -26,7 +27,7 @@ def add_ticket(request: Request) -> Response:
     Register (add) a ticket for periodical scoring.
 
     Args:
-        request (Request): _description_
+        request (Request): external request
 
     Returns:
         Response:
@@ -69,16 +70,24 @@ def add_ticket(request: Request) -> Response:
         # schedule a task to update ticket score:
         # 1. get or create a schedule
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=5,
-            period=IntervalSchedule.SECONDS,
+            every=5, 
+            period=IntervalSchedule.SECONDS, # TODO: change period from service endpoint <-
         )
 
         # 2. create a periodic task with assigned function
         PeriodicTask.objects.create(
             interval=schedule,
-            name=f'api_v1.score_update_{ticket_id}', # TODO: replace with api_v1.tasks.score_update[ticket_id]
-            task='api_v1.tasks.report_status', # TODO: implement api_v1.tasks.score_update
-            kwargs=json.dumps({'ticket_id' : ticket_id})
+            name=f'api_v1.update_ticket_score[{ticket_id}]',
+            task='api_v1.tasks.update_ticket_score', 
+            args=json.dumps([data['ticket_type_id'], data['ticket_id']]),
+            kwargs=json.dumps(type_specific.data)
+        )
+
+        # 3. first score calculation async
+        update_ticket_score.apply_async(
+            args=[data['ticket_type_id'], data['ticket_id']],
+            kwargs=type_specific.data, 
+            countdown=10 # 10 seconds countdown before calculate and push to Spell
         )
 
         return Response(
@@ -89,8 +98,6 @@ def add_ticket(request: Request) -> Response:
     else:
         Ticket.objects.get(ticket_id=ticket_id).delete()
         type_specific.is_valid(raise_exception=True)
-    
-    # TODO: scoring and saving result into ScoringGlobal
 
 # ------------------------- #
 
@@ -100,8 +107,8 @@ def pause_ticket(request: Request, ticket_id: str) -> Response:
     _summary_
 
     Args:
-        request (Request): _description_
-        ticket_id (str): _description_
+        request (Request): external request
+        ticket_id (str): ticket ID in the universal format
 
     Returns:
         Response:
@@ -129,7 +136,7 @@ def pause_ticket(request: Request, ticket_id: str) -> Response:
         ticket.save()
 
         # pause assigned update task
-        task = PeriodicTask.objects.get(name=f'api_v1.score_update_{ticket.ticket_id}')
+        task = PeriodicTask.objects.get(name=f'api_v1.update_ticket_score[{ticket.ticket_id}]')
         task.enabled = False
         task.save()
 
@@ -143,8 +150,8 @@ def resume_ticket(request: Request, ticket_id: str) -> Response:
     _summary_
 
     Args:
-        request (Request): _description_
-        ticket_id (str): _description_
+        request (Request): external request
+        ticket_id (str): ticket ID in the universal format
 
     Returns:
         Response:
@@ -175,7 +182,7 @@ def resume_ticket(request: Request, ticket_id: str) -> Response:
         ticket.save()
 
         # resume assigned update task
-        task = PeriodicTask.objects.get(name=f'api_v1.score_update_{ticket.ticket_id}')
+        task = PeriodicTask.objects.get(name=f'api_v1.update_ticket_score[{ticket.ticket_id}]')
         task.enabled = True
         task.save()
 
@@ -189,8 +196,8 @@ def close_ticket(request: Request, ticket_id: str) -> Response:
     _summary_
 
     Args:
-        request (Request): _description_
-        ticket_id (str): _description_
+        request (Request): external request
+        ticket_id (str): ticket ID in the universal format
 
     Returns:
         Response:
@@ -218,7 +225,7 @@ def close_ticket(request: Request, ticket_id: str) -> Response:
         ticket.save()
 
         # delete assigned update task
-        PeriodicTask.objects.get(name=f'api_v1.score_update_{ticket.ticket_id}').delete()
+        PeriodicTask.objects.get(name=f'api_v1.update_ticket_score[{ticket.ticket_id}]').delete()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -230,8 +237,8 @@ def get_ticket(request: Request, ticket_id: str) -> Response:
     _summary_
 
     Args:
-        request (Request): _description_
-        ticket_id (str): _description_
+        request (Request): external request
+        ticket_id (str): ticket ID in the universal format
 
     Returns:
         Response:
@@ -252,8 +259,8 @@ def delete_ticket(request: Request, ticket_id: str) -> Response:
     _summary_
 
     Args:
-        request (Request): _description_
-        ticket_id (str): _description_
+        request (Request): external request
+        ticket_id (str): ticket ID in the universal format
 
     Returns:
         Response:
@@ -264,33 +271,9 @@ def delete_ticket(request: Request, ticket_id: str) -> Response:
     ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
 
     if ticket.ticket_status_id != get_id_by_value('closed', name='ticket_status'):
-        PeriodicTask.objects.get(name=f'api_v1.score_update_{ticket.ticket_id}').delete()
+        PeriodicTask.objects.get(name=f'api_v1.update_ticket_score[{ticket.ticket_id}]').delete()
 
     ticket.delete()
-
-    return Response(status=status.HTTP_200_OK)
-
-# ------------------------- #
-
-@api_view(http_method_names=['POST'])
-def update_ticket_score(request: Request, ticket_id: str) -> Response:
-    """
-    _summary_
-
-    Args:
-        request (Request): _description_
-        ticket_id (str): _description_
-
-    Returns:
-        Response:
-            404:
-            200:
-    """
-
-    ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
-    
-    # TODO: avoid too often repeat
-    # ... scoring
 
     return Response(status=status.HTTP_200_OK)
 
