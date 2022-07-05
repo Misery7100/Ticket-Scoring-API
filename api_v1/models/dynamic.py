@@ -73,6 +73,7 @@ class UnverifiedPaymentSource(models.Model):
 
 class TurnoverLimitAlert(models.Model):
 
+    # main comps (?)
     ticket_assigned = models.OneToOneField(Ticket, primary_key=True, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=100)
     legal_country_code = models.CharField(max_length=20)
@@ -83,12 +84,11 @@ class TurnoverLimitAlert(models.Model):
     limit_entity = models.CharField(max_length=50)
     limit_percentage = models.FloatField()
     limit_amount = models.FloatField()
+    limit_issue_date = models.DateTimeField()
 
-    turnover_last_thirty_days = models.FloatField() # in EUR
-    turnover_prev_thirty_days = models.FloatField() # in EUR
+    turnover_history = psqlfields.ArrayField(models.FloatField(), blank=True, default=list) # in EUR
 
-    limit_due_date = models.DateTimeField()
-
+    # just to trace statistics
     brands = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
     channels = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)
     terminals = psqlfields.ArrayField(models.CharField(max_length=100), blank=True, null=True, default=list)

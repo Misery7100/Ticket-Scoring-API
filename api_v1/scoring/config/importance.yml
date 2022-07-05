@@ -1,0 +1,3 @@
+turnover_limit_alert:
+  sigma: 0.9
+  beta: 9.8

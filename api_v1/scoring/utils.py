@@ -1,3 +1,4 @@
+import numpy as np
 import requests
 
 from typing import Dict, List
@@ -95,3 +96,6 @@ def get_compound_growth_rate(last_period: float, first_period: float, period_dif
     return (last_period / first_period) ** (1 / period_difference) - 1
 
 # ------------------------- #
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))

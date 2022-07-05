@@ -1,18 +1,27 @@
 import logging
+import os
 import numpy as np
+import yaml
 
 from datetime import datetime, timezone
 from dateutil import parser as dtparser
+from pathlib import Path
 from typing import Callable, List, Tuple
 
 from api_v1.models.dynamic import *
 from api_v1.models.static import *
+from api_v1.scoring.forecast import forecast_expected_turnover
+from api_v1.scoring.utils import sigmoid
 from backend.local import staticdata
 from backend.utils import dotdict
 
 # ------------------------- #
 
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parent
+
+with open(os.path.join(BASE_DIR, 'config/importance.yml'), 'r') as stream:
+    importance_cfg = dotdict(yaml.load(stream, Loader=yaml.Loader))
 
 # ------------------------- #
 
@@ -86,27 +95,45 @@ def _calc_importance_turnover_limit_alert(**kwargs) -> float:
         float: importance score
     """
 
-    kwargs = dotdict(kwargs) #! unnecessary
-
-    sigmoid = lambda x: 1 / (1 + np.exp(-x))
+    kwargs = dotdict(kwargs)
     
     percentage = kwargs.limit_percentage
     amount = kwargs.limit_amount
-    turnover30last = kwargs.turnover_last_thirty_days
-    turnover30prev = kwargs.turnover_prev_thirty_days
+    turnover_history = kwargs.turnover_history
+    issue_date = kwargs.limit_issue_date
 
-    # TODO: here should be a bit different strategy (check google doc)
-
-    limit_remain = (100 - percentage) * amount
     now = datetime.now(timezone.utc)
-    delta = dtparser.parse(kwargs.limit_due_date) - now
+    delta = (now - issue_date).days
 
-    limit_norm = limit_remain / (delta.days + delta.seconds / 3600 / 24)
-    turnover_norm = (0.75 * turnover30last + 0.25 * turnover30prev) / 30
+    rough_estimate = delta * (100 / percentage - 1)
+    limit_remain = (100 - percentage) * amount
 
-    val = sigmoid(((turnover_norm / limit_norm) / 0.09 - 7))
+    # check scale:
+
+    # 1. rough estimate ~ day
+    if rough_estimate <= 7:
+        expected_turnover = forecast_expected_turnover(turnover_data=turnover_history)
+        turnover_rescale = expected_turnover / 7 * rough_estimate
+
+    # 2. rough estimate ~ week
+    elif rough_estimate < 29:
+        expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, n_periods=4)
+        expected_turnover = sum(expected_turnover)
+        turnover_rescale = expected_turnover / 28 * rough_estimate
     
-    return 100 * val
+    # 3. rough estimate ~ month
+    else:
+        turnover_history = np.array_split(np.array(turnover_history), 4)
+        turnover_history = list(map(sum, turnover_history))
+        expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, m=3)
+        turnover_rescale = expected_turnover / 30 * rough_estimate
+    
+    sigma = importance_cfg.turnover_limit_alert.sigma #! move to the db
+    beta = importance_cfg.turnover_limit_alert.beta #! move to the db
+
+    importance = sigmoid(sigma * (turnover_rescale / (beta * limit_remain) - 1))
+    
+    return 100 * importance
 
 # ------------------------- #
 
@@ -237,7 +264,7 @@ def _calc_internal_score_verify_profile(ticket_id: str, **kwargs) -> float:
         score += float(brand.specified_turnover_current) * brand.average_fee_rate * period * trust_score
     
     max_rel_score = _get_or_update_max_relative_score('verify_profile', score)
-    internal_score = (score / max_rel_score) ** 0.3 #! into configuration ? + need to verify
+    internal_score = (score / max_rel_score) ** 0.3 #! need to verify
 
     return internal_score
 
@@ -300,7 +327,7 @@ def _calc_internal_score_unverified_payment_source(ticket_id: str, **kwargs) -> 
     score = ticket.payment_amount
 
     max_rel_score = _get_or_update_max_relative_score('unverified_payment_source', score)
-    internal_score = 1 + (score / max_rel_score) ** 0.3
+    internal_score = 1 + (score / max_rel_score)
 
     return internal_score
 
@@ -317,10 +344,7 @@ def _calc_internal_score_turnover_limit_alert(ticket_id: str, **kwargs) -> float
         float: internal score
     """
 
-    score = 1 # TODO: urgency scoring implementation
-
-    max_rel_score = _get_or_update_max_relative_score('turnover_limit_alert', score)
-    internal_score = (score / max_rel_score) ** 0.3
+    internal_score = 1
 
     return internal_score
 

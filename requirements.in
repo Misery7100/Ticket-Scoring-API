@@ -1,0 +1,11 @@
+django
+django-celery-beat
+django-celery-results
+djangorestframework
+factory-boy
+markdown
+pmdarima
+pytest
+PyYAML
+redis
+requests

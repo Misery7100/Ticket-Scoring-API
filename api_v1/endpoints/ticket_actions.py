@@ -114,7 +114,7 @@ def pause_ticket(request: Request, ticket_id: str) -> Response:
         Response:
             404:
             400:
-            200:
+            200:dw
     """
 
     # get ticket globally
