@@ -116,27 +116,25 @@ def _calc_importance_turnover_limit_alert(**kwargs) -> float:
 
     # 1. rough estimate ~ day
     if rough_estimate <= 7:
-        logger.warning('rough_estimate <= 7')
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history)
         turnover_rescale = expected_turnover / 7 * rough_estimate
 
     # 2. rough estimate ~ week
     elif rough_estimate < 29:
-        logger.warning('rough_estimate < 29')
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, n_periods=4)
         expected_turnover = sum(expected_turnover)
         turnover_rescale = expected_turnover / 28 * rough_estimate
     
     # 3. rough estimate ~ month
     else:
-        logger.warning('rough_estimate >= 29')
         turnover_history = np.array_split(np.array(turnover_history), 4)
         turnover_history = np.array(list(map(sum, turnover_history)))
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, m=3)
         turnover_rescale = expected_turnover / 30 * rough_estimate
 
-    sigma = importance_cfg.turnover_limit_alert.sigma #! move to the db
-    beta = importance_cfg.turnover_limit_alert.beta #! move to the db
+    #! edit sigma to work with periodically updated values depend on current ticket stack
+    sigma = importance_cfg.turnover_limit_alert.sigma
+    beta = importance_cfg.turnover_limit_alert.beta
 
     logger.warning(f'{turnover_rescale=}, {limit_remain=}, {sigma=}, {beta=}')
     logger.warning(f'{turnover_rescale / (sigma * limit_remain)=}')
@@ -274,7 +272,7 @@ def _calc_internal_score_verify_profile(ticket_id: str, **kwargs) -> float:
         score += float(brand.specified_turnover_current) * brand.average_fee_rate * period * trust_score
     
     max_rel_score = _get_or_update_max_relative_score('verify_profile', score)
-    internal_score = (score / max_rel_score) ** 0.3 #! need to verify
+    internal_score = (score / max_rel_score) ** 0.5 #! need to verify
 
     return internal_score
 
@@ -295,7 +293,7 @@ def _calc_internal_score_outgoing_account_payment(ticket_id: str, **kwargs) -> f
     score = ticket.payment_amount
 
     max_rel_score = _get_or_update_max_relative_score('outgoing_account_payment', score)
-    internal_score = (score / max_rel_score) ** 0.3
+    internal_score = (score / max_rel_score) ** 0.5
 
     return internal_score
 
@@ -316,7 +314,7 @@ def _calc_internal_score_outgoing_account_payment_transfer(ticket_id: str, **kwa
     score = ticket.payment_amount
 
     max_rel_score = _get_or_update_max_relative_score('outgoing_account_payment_transfer', score)
-    internal_score = (score / max_rel_score) ** 0.3
+    internal_score = (score / max_rel_score) ** 0.5
 
     return internal_score
 
@@ -337,7 +335,7 @@ def _calc_internal_score_unverified_payment_source(ticket_id: str, **kwargs) -> 
     score = ticket.payment_amount
 
     max_rel_score = _get_or_update_max_relative_score('unverified_payment_source', score)
-    internal_score = 1 + (score / max_rel_score)
+    internal_score = 1 + (score / max_rel_score) ** 0.5
 
     return internal_score
 

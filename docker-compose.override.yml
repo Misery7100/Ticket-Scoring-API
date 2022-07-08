@@ -4,3 +4,15 @@ services:
       /bin/sh -c "python manage.py makemigrations
                   python manage.py migrate
                   gunicorn -c backend/gunicorn/dev.py"
+  
+  # dev database
+  database:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - 5433:5432
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./secret/create_schemas.sql:/docker-entrypoint-initdb.d/create_schemas.sql

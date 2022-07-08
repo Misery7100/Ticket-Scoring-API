@@ -1,1 +1,18 @@
-#
+# version: '3.9'
+# services:
+
+#   # secure server
+#   nginx:
+#     # labels:
+#     #   - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+# letsencrypt config
+# letsencrypt:
+#   image: jrcs/letsencrypt-nginx-proxy-companion:v1.7
+#   container_name: letsencrypt
+#   restart: always
+#   volumes_from:
+#     - nginx
+#   volumes:
+#     - ./secret/certs:/etc/nginx/certs:rw
+#   environment:
+#     - REUSE_PRIVATE_KEYS=true
