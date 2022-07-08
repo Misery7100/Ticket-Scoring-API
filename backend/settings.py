@@ -27,13 +27,13 @@ with open(os.path.join(BASE_DIR, 'secret/databases.yml'), 'r') as stream:
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# TODO: move to the env
 SECRET_KEY = 'django-insecure-^klwmyk6xy$+_80pdhu98!@ffwt1k)5(m_m=!1vp!i*r9^qqw='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']
 
 # Application definition
 
@@ -98,7 +98,8 @@ DATABASES['default'] = {
     'NAME': 'tsapi',
     'USER': 'postgres',
     'PASSWORD': 's@p191Jz778_~',
-    'HOST': 'localhost'
+    'HOST': 'database',
+    'PORT' : 5432
 }
 
 
@@ -145,8 +146,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery settings
 
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_BROKER_URL = 'redis://redis:6379'
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_ENABLE_UTC = True

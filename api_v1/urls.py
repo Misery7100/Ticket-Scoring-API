@@ -1,10 +1,14 @@
 from django.urls import include, path
 
-from api_v1.endpoints import ticket_actions
+from api_v1.endpoints import ticket_actions, service
 
 # ------------------------- #
 
 urlpatterns = [
+    # service endpoints
+    path('health-check', service.health_check, name='health-check'),
+
+    # ticket actions
     path('add-ticket', ticket_actions.add_ticket, name='add-ticket'),
     path('get-ticket/<str:ticket_id>', ticket_actions.get_ticket, name='get-ticket'),
     path('delete-ticket/<str:ticket_id>', ticket_actions.delete_ticket, name='delete-ticket'),

@@ -1,0 +1,6 @@
+services:
+  api:
+    command: > 
+      /bin/sh -c "python manage.py makemigrations
+                  python manage.py migrate
+                  gunicorn -c backend/gunicorn/dev.py"

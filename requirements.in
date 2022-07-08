@@ -3,8 +3,10 @@ django-celery-beat
 django-celery-results
 djangorestframework
 factory-boy
+gunicorn
 markdown
 pmdarima
+psycopg2-binary
 pytest
 PyYAML
 redis

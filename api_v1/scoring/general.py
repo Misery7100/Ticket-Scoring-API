@@ -100,38 +100,48 @@ def _calc_importance_turnover_limit_alert(**kwargs) -> float:
     percentage = kwargs.limit_percentage
     amount = kwargs.limit_amount
     turnover_history = kwargs.turnover_history
-    issue_date = kwargs.limit_issue_date
+    issue_date = dtparser.parse(kwargs.limit_issue_date)
 
     now = datetime.now(timezone.utc)
     delta = (now - issue_date).days
 
     rough_estimate = delta * (100 / percentage - 1)
-    limit_remain = (100 - percentage) * amount
+    limit_remain = (100 - percentage) / 100 * amount
+
+    # if len(turnover_history) < 12:
+    #     replace_m = True
 
     # check scale:
+    logger.warning(f'{rough_estimate=}')
 
     # 1. rough estimate ~ day
     if rough_estimate <= 7:
+        logger.warning('rough_estimate <= 7')
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history)
         turnover_rescale = expected_turnover / 7 * rough_estimate
 
     # 2. rough estimate ~ week
     elif rough_estimate < 29:
+        logger.warning('rough_estimate < 29')
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, n_periods=4)
         expected_turnover = sum(expected_turnover)
         turnover_rescale = expected_turnover / 28 * rough_estimate
     
     # 3. rough estimate ~ month
     else:
+        logger.warning('rough_estimate >= 29')
         turnover_history = np.array_split(np.array(turnover_history), 4)
-        turnover_history = list(map(sum, turnover_history))
+        turnover_history = np.array(list(map(sum, turnover_history)))
         expected_turnover = forecast_expected_turnover(turnover_data=turnover_history, m=3)
         turnover_rescale = expected_turnover / 30 * rough_estimate
-    
+
     sigma = importance_cfg.turnover_limit_alert.sigma #! move to the db
     beta = importance_cfg.turnover_limit_alert.beta #! move to the db
 
-    importance = sigmoid(sigma * (turnover_rescale / (beta * limit_remain) - 1))
+    logger.warning(f'{turnover_rescale=}, {limit_remain=}, {sigma=}, {beta=}')
+    logger.warning(f'{turnover_rescale / (sigma * limit_remain)=}')
+
+    importance = sigmoid(beta * (turnover_rescale / (sigma * limit_remain) - 1))
     
     return 100 * importance
 

@@ -1,0 +1,70 @@
+version: '3.9'
+services:
+  # secure server
+  nginx:
+    build: ./backend/nginx
+    container_name: server
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes: 
+      - ./secret/certs:/etc/nginx/certs:ro
+    # labels:
+    #   - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    
+  # letsencrypt
+  # letsencrypt:
+  #   image: jrcs/letsencrypt-nginx-proxy-companion:v1.7
+  #   container_name: letsencrypt
+  #   restart: always
+  #   volumes_from:
+  #     - nginx
+  #   volumes:
+  #     - ./secret/certs:/etc/nginx/certs:rw
+  #   environment:
+  #     - REUSE_PRIVATE_KEYS=true
+  
+  # dev database
+  database:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - 5433:5432
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./secret/create_schemas.sql:/docker-entrypoint-initdb.d/create_schemas.sql
+    
+  # main django api app run on gunicorn
+  api:
+    build: .
+    container_name: api
+    command: > 
+      /bin/sh -c "python manage.py makemigrations
+                  python manage.py migrate
+                  gunicorn -c backend/gunicorn/dev.py"
+    expose:
+      - 8000
+    restart: unless-stopped
+  
+  # messaging interface
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+  
+  # tasking interface worker
+  celery_worker:
+    build: .
+    container_name: celery-worker
+    command: celery -A backend worker -l INFO
+    restart: always
+  
+  # tasking interface scheduler
+  celery_beat:
+    build: .
+    container_name: celery-beat
+    command: celery -A backend beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    restart: always
